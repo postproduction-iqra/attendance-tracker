@@ -182,20 +182,24 @@
                 db = getFirestore(app);
 
                 // Use anonymous sign-in directly for shared access
-                await signInAnonymously(auth);
-
-                // Wait for the auth state to be established before proceeding.
-                onAuthStateChanged(auth, (user) => {
+                onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
                         userIdDisplay.textContent = `User ID: ${userId}`;
                         userIdDisplay.classList.remove('hidden');
+                    } else {
+                         // Sign in anonymously if no user is authenticated
+                        try {
+                             await signInAnonymously(auth);
+                        } catch (error) {
+                            console.error('Firebase authentication error:', error);
+                        }
                     }
                     isAuthReady = true;
                     setupApp();
                 });
             } catch (error) {
-                console.error('Firebase initialization or authentication error:', error);
+                console.error('Firebase initialization error:', error);
             }
         };
 
@@ -236,7 +240,7 @@
 
         const listenForData = () => {
             if (!db || !userId) return;
-            // The path is now a PUBLIC path so everyone can access and edit the same data
+            // FIX: The path is now a PUBLIC path so everyone can access and edit the same data
             const docRef = doc(db, `/artifacts/${appId}/public/data/employees/${currentEmployee}`);
 
             onSnapshot(docRef, (docSnap) => {
